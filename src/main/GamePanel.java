@@ -20,6 +20,9 @@ public class GamePanel extends JPanel implements Runnable{
     public static final int WHITE=1;
     public static final int BLACK=0;
     int currentColor=WHITE;
+    //booleans
+    boolean canMove;
+    boolean checkSquare;
     public GamePanel() {
         //adding mouse listeners
         addMouseListener(mouse);
@@ -110,20 +113,42 @@ public class GamePanel extends JPanel implements Runnable{
                 simmulate();
             }
         }
-        else{
+        if(!mouse.pressed){
             if (activePiece != null) {
-                activePiece.updatePosition();
-                activePiece=null;
+                if(checkSquare){
+                    //update pieces in case of collision/capture
+                    CopyPieces(simPieces,pieces);
+                    activePiece.updatePosition();
+                }else{
+                    //move is not valid, reset it
+                    CopyPieces(pieces,simPieces);
+                    activePiece.resetPosition();
+                    activePiece=null;
+                }
             }
         }
     }
     //thinking phase
     private void simmulate(){
+        canMove=false;
+        checkSquare=false;
+        //restoring removed piece during simulation
+        CopyPieces(pieces,simPieces);
         activePiece.x=mouse.x-Board.SQUARE_SIZE/2;//so that mouse pointer is in the center of the piece
         activePiece.y=mouse.y-Board.SQUARE_SIZE/2;
         //setting row and column
         activePiece.col=activePiece.getCol(activePiece.x);
         activePiece.row=activePiece.getRow(activePiece.y);
+        if(activePiece.canMove(activePiece.col,activePiece.row)){
+            canMove=true;
+            if(activePiece.collision!=null){
+                simPieces.remove(activePiece.collision.getIndex());
+            }
+            checkSquare=true;
+
+
+        }
+
     }
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -135,10 +160,12 @@ public class GamePanel extends JPanel implements Runnable{
             piece.draw(g2);
         }
         if(activePiece!=null){
-            g2.setColor(Color.PINK);
-            g2.setComposite(AlphaComposite.SrcOver.derive(0.8f));//smaller opacity
-            g2.fillRect(activePiece.col*Board.SQUARE_SIZE,activePiece.row*Board.SQUARE_SIZE,Board.SQUARE_SIZE,Board.SQUARE_SIZE);
-            g2.setComposite(AlphaComposite.SrcOver.derive(1f));//resets opacity
+            if(canMove){
+                g2.setColor(Color.PINK);
+                g2.setComposite(AlphaComposite.SrcOver.derive(0.8f));//smaller opacity
+                g2.fillRect(activePiece.col*Board.SQUARE_SIZE,activePiece.row*Board.SQUARE_SIZE,Board.SQUARE_SIZE,Board.SQUARE_SIZE);
+                g2.setComposite(AlphaComposite.SrcOver.derive(1f));//resets opacity
+            }
             activePiece.draw(g2);
         }
     }

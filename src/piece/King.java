@@ -12,4 +12,16 @@ public class King extends Piece{
             image=getImage("/Chess_kdt60");
         }
     }
+
+    @Override
+    public boolean canMove(int col, int row) {
+        if(isWithin(col,row)){
+            if(Math.abs(col-prevCol)<=1 && Math.abs(row-prevRow)<=1){
+                if (isValidSquare(col,row)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }
