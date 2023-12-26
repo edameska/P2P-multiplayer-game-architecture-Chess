@@ -6,16 +6,19 @@ import java.io.IOException;
 
 import main.Board;
 import main.GamePanel;
+import main.PieceType;
 
 import javax.imageio.ImageIO;
 
 public class Piece {
+    public PieceType type;
     public int x,y;
     public BufferedImage image;
     public int col,row, prevCol,prevRow;
     public int color;
     public Piece collision;
     public boolean isMoved;
+    public boolean twoStep;//has it moved 2 steps
 
     public Piece(int color,int col, int row){
         this.color=color;
@@ -58,6 +61,12 @@ public class Piece {
         return 0;
     }
     public void updatePosition(){
+        //check bieno pole
+        if(type== PieceType.PAWN){
+            if(Math.abs(row-prevRow)==2){
+                twoStep=true;
+            }
+        }
         x=getX(col);
         y=getY(row);
         //update previous position since move is complete
@@ -81,10 +90,7 @@ public class Piece {
         return false;
     }
     public Piece getCollision(int targetCol, int targetRow){
-        System.out.println("targetCol: " + targetCol + ", targetRow: " + targetRow);
         for (Piece piece : GamePanel.simPieces) {
-            System.out.println("piece.col: " + piece.col + ", piece.row: " + piece.row);
-
             if (!piece.equals(this) && piece.col == targetCol && piece.row == targetRow) {
                 return piece;
             }

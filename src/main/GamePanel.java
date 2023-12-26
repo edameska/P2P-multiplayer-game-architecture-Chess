@@ -174,9 +174,20 @@ public class GamePanel extends JPanel implements Runnable{
     private void changeTurn(){
         if(currentColor==WHITE){
             currentColor=BLACK;
+            //reset double step
+            for(Piece piece:simPieces){
+                if(piece.color==BLACK){
+                    piece.twoStep=false;
+                }
+            }
         }
         else{
             currentColor=WHITE;
+            for(Piece piece:simPieces){
+                if(piece.color==WHITE){
+                    piece.twoStep=false;
+                }
+            }
         }
         activePiece=null;
     }

@@ -1,11 +1,13 @@
 package piece;
 
 import main.GamePanel;
+import main.PieceType;
 
 
 public class Pawn  extends Piece{
     public Pawn(int color,int col, int row){
        super(color,col,row);
+       type=PieceType.PAWN;
             if(color==GamePanel.WHITE){
                 image=getImage("/Chess_plt60");
             }
@@ -32,7 +34,15 @@ public class Pawn  extends Piece{
             if (Math.abs(col - prevCol) == 1 && row == prevRow + MoveVal && collision != null && collision.color != color) {
                 return true;
             }
-
+            //en passant/bieno pole
+            if (Math.abs(col - prevCol) == 1 && row == prevRow + MoveVal){
+                for(Piece p: GamePanel.simPieces){
+                    if(p.col==col&&p.row==prevRow&&p.twoStep){
+                        collision=p;
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }

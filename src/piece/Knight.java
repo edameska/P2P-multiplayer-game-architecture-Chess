@@ -1,10 +1,12 @@
 package piece;
 
 import main.GamePanel;
+import main.PieceType;
 
 public class Knight extends Piece{
     public Knight(int color,int col, int row){
         super(color,col,row);
+        type= PieceType.KNIGHT;
         if(color== GamePanel.WHITE){
             image=getImage("/Chess_nlt60");
         }
