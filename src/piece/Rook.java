@@ -12,4 +12,16 @@ public class Rook extends Piece{
             image=getImage("/Chess_rdt60");
         }
     }
+
+    @Override
+    public boolean canMove(int col, int row) {
+        if(isWithin(row,col)&&!SameSquare(col,row)){
+            if(col==prevCol||row==prevRow){
+                if(isValidSquare(col,row)&&!pieceInWayParallel(col,row)){
+                    return true;
+                }
+            }
+    }
+        return false;
+    }
 }

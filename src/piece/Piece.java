@@ -15,6 +15,7 @@ public class Piece {
     public int col,row, prevCol,prevRow;
     public int color;
     public Piece collision;
+    public boolean isMoved;
 
     public Piece(int color,int col, int row){
         this.color=color;
@@ -62,7 +63,7 @@ public class Piece {
         //update previous position since move is complete
         prevCol=getCol(x);
         prevRow=getRow(y);
-
+        isMoved=true;
     }
     public void resetPosition(){
         col=prevCol;
@@ -100,6 +101,99 @@ public class Piece {
                 return true;
             }
         }
+        return false;
+    }
+    public boolean SameSquare(int targetCol,int targetRow){
+        if(targetCol==prevCol&&targetRow==prevRow){
+            return true;
+        }
+        return false;
+    }
+    public boolean pieceInWayParallel(int col,int row){
+        //left
+        for (int i = prevCol; i >col; i--) {
+            for(Piece p:GamePanel.simPieces){
+                if(p.col==i&&p.row==row){
+                    collision=p;
+                    return true;
+                }
+            }
+        }
+        //right
+        for (int i = prevCol+1; i <col; i++) {
+            for(Piece p:GamePanel.simPieces){
+                if(p.col==i&&p.row==row){
+                    collision=p;
+                    return true;
+                }
+            }
+        }
+        //up
+        for (int i = prevRow-1; i >row; i--) {
+            for(Piece p:GamePanel.simPieces){
+                if(p.row==i&&p.col==col){
+                    collision=p;
+                    return true;
+                }
+            }
+        }
+        //down
+        for (int i = prevRow+1; i <row; i++) {
+            for(Piece p:GamePanel.simPieces){
+                if(p.row==i&&p.col==col){
+                    collision=p;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    public boolean pieceInTheWayDiagonal(int col, int row){
+        if(row<prevRow) {
+            //up left
+            for (int i = prevCol-1; i >col; i--) {
+                int diff = Math.abs(i-prevCol);
+                for(Piece p:GamePanel.simPieces){
+                    if(p.col==i&&p.row==prevRow-diff){
+                        collision=p;
+                        return true;
+                    }
+                }
+            }
+            //up right
+            for (int i = prevCol+1; i <col; i++) {
+                int diff = Math.abs(i-prevCol);
+                for(Piece p:GamePanel.simPieces){
+                    if(p.col==i&&p.row==prevRow-diff){
+                        collision=p;
+                        return true;
+                    }
+                }
+            }
+            }
+        if(row>prevRow) {
+            //down left
+            for (int i = prevCol-1; i >col; i--) {
+                int diff = Math.abs(i-prevCol);
+                for(Piece p:GamePanel.simPieces){
+                    if(p.col==i&&p.row==prevRow+diff){
+                        collision=p;
+                        return true;
+                    }
+                }
+            }
+            //down right
+            for (int i = prevCol+1; i <col; i++) {
+                int diff = Math.abs(i-prevCol);
+                for(Piece p:GamePanel.simPieces){
+                    if(p.col==i&&p.row==prevRow+diff){
+                        collision=p;
+                        return true;
+                    }
+                }
+            }
+        }
+
         return false;
     }
     public void draw(Graphics2D g2){

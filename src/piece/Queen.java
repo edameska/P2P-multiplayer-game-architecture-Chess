@@ -12,4 +12,22 @@ public class Queen extends Piece{
             image=getImage("/Chess_qdt60");
         }
     }
+
+    @Override
+    public boolean canMove(int col, int row) {
+        //rook and bishop combined
+        if(isWithin(col,row)&&!SameSquare(col,row)){
+            if(col==prevCol||row==prevRow){
+                if(isValidSquare(col,row)&&!pieceInWayParallel(col,row)){
+                    return true;
+                }
+            }
+            if(Math.abs(col-prevCol)==Math.abs(row-prevRow)){
+                if(isValidSquare(col,row)&&!pieceInTheWayDiagonal(col,row)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }
