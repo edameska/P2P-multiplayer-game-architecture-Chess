@@ -81,10 +81,14 @@ public class Piece {
         return false;
     }
     public Piece getCollision(int targetCol, int targetRow){
-        for(Piece piece: GamePanel.simPieces){
-            if(piece.col==targetCol && piece.row==targetRow&&piece!=this){
+        System.out.println("targetCol: " + targetCol + ", targetRow: " + targetRow);
+        for (Piece piece : GamePanel.simPieces) {
+            System.out.println("piece.col: " + piece.col + ", piece.row: " + piece.row);
+
+            if (!piece.equals(this) && piece.col == targetCol && piece.row == targetRow) {
                 return piece;
             }
+
         }
         return null;
     }

@@ -17,6 +17,7 @@ public class GamePanel extends JPanel implements Runnable{
     public static ArrayList<Piece> pieces=new ArrayList<Piece>();//backupList
     public static ArrayList<Piece> simPieces=new ArrayList<Piece>();
     Piece activePiece;//piece that player is currently holding
+    public static Piece castlingPiece;//piece that is castling
     public static final int WHITE=1;
     public static final int BLACK=0;
     int currentColor=WHITE;
@@ -119,6 +120,10 @@ public class GamePanel extends JPanel implements Runnable{
                     //update pieces in case of collision/capture
                     CopyPieces(simPieces,pieces);
                     activePiece.updatePosition();
+                    if(castlingPiece!=null){
+                        castlingPiece.updatePosition();
+                    }
+                    changeTurn();//next move
                 }else{
                     //move is not valid, reset it
                     CopyPieces(pieces,simPieces);
@@ -134,6 +139,11 @@ public class GamePanel extends JPanel implements Runnable{
         checkSquare=false;
         //restoring removed piece during simulation
         CopyPieces(pieces,simPieces);
+        if(castlingPiece!=null){
+            castlingPiece.col=castlingPiece.prevCol;
+            castlingPiece.x=castlingPiece.getX(castlingPiece.col);
+            castlingPiece=null;
+        }
         activePiece.x=mouse.x-Board.SQUARE_SIZE/2;//so that mouse pointer is in the center of the piece
         activePiece.y=mouse.y-Board.SQUARE_SIZE/2;
         //setting row and column
@@ -144,12 +154,33 @@ public class GamePanel extends JPanel implements Runnable{
             if(activePiece.collision!=null){
                 simPieces.remove(activePiece.collision.getIndex());
             }
+            checkCastle();
             checkSquare=true;
-
-
         }
-
     }
+    private void checkCastle(){
+        if(castlingPiece!=null){
+            //small castling
+            if(castlingPiece.col==0) {
+                castlingPiece.col += 3;
+            }
+            if(castlingPiece.col==7){
+                castlingPiece.col-=2;
+            }
+            castlingPiece.x= castlingPiece.getX(castlingPiece.col);
+            castlingPiece.y= castlingPiece.getY(castlingPiece.row);
+        }
+    }
+    private void changeTurn(){
+        if(currentColor==WHITE){
+            currentColor=BLACK;
+        }
+        else{
+            currentColor=WHITE;
+        }
+        activePiece=null;
+    }
+
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
@@ -168,6 +199,17 @@ public class GamePanel extends JPanel implements Runnable{
             }
             activePiece.draw(g2);
         }
+        //display messages
+        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2.setFont(new Font("Times New Roman",Font.BOLD,20));
+        g2.setColor(new Color(239, 202, 202));
+        if(currentColor==WHITE){
+            g2.drawString("White's Turn",500,400);
+        }
+        else{
+            g2.drawString("Black's Turn",500,100);
+        }
+
     }
 
 }

@@ -29,12 +29,11 @@ public class Pawn  extends Piece{
                 return true;
             }
             //diagonal capture
-            if(Math.abs(col-prevCol)==1&&row==prevRow+MoveVal&&collision!=null&&collision.color!=color){
+            if (Math.abs(col - prevCol) == 1 && row == prevRow + MoveVal && collision != null && collision.color != color) {
                 return true;
             }
+
         }
-
-
         return false;
     }
 }
