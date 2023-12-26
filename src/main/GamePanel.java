@@ -12,17 +12,22 @@ public class GamePanel extends JPanel implements Runnable{
     final int FPS=60;
     Thread gameThread;
     Board board= new Board();
+    Mouse mouse=new Mouse();
     //pieces
     public static ArrayList<Piece> pieces=new ArrayList<Piece>();//backupList
     public static ArrayList<Piece> simPieces=new ArrayList<Piece>();
+    Piece activePiece;//piece that player is currently holding
     public static final int WHITE=1;
     public static final int BLACK=0;
     int currentColor=WHITE;
     public GamePanel() {
-        //setFocusable(true);
-        //requestFocus();
+        //adding mouse listeners
+        addMouseListener(mouse);
+        addMouseMotionListener(mouse);
+        //setting up panel
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setBackground(Color.BLACK);
+        //setting up pieces
         setPieces();
         CopyPieces(pieces,simPieces);
     }
@@ -91,8 +96,36 @@ public class GamePanel extends JPanel implements Runnable{
         }
     }
     private void update() {
+        if(mouse.pressed){
+            if(activePiece==null){
+                //if actieve piece is null check if a piiece can be picked up
+                for(Piece piece:simPieces){
+                    //pick up piece
+                    if(piece.color==currentColor&&piece.col==mouse.x/Board.SQUARE_SIZE&&piece.row==mouse.y/Board.SQUARE_SIZE){
+                        activePiece=piece;
+                    }
+                }
+            }
+            else{
+                simmulate();
+            }
+        }
+        else{
+            if (activePiece != null) {
+                activePiece.updatePosition();
+                activePiece=null;
+            }
+        }
     }
-    public void paintComponent(Graphics g) {//if it doesnt work migrate the type in the function
+    //thinking phase
+    private void simmulate(){
+        activePiece.x=mouse.x-Board.SQUARE_SIZE/2;//so that mouse pointer is in the center of the piece
+        activePiece.y=mouse.y-Board.SQUARE_SIZE/2;
+        //setting row and column
+        activePiece.col=activePiece.getCol(activePiece.x);
+        activePiece.row=activePiece.getRow(activePiece.y);
+    }
+    public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         //board
@@ -100,6 +133,13 @@ public class GamePanel extends JPanel implements Runnable{
         //pieces
         for(Piece piece:simPieces){
             piece.draw(g2);
+        }
+        if(activePiece!=null){
+            g2.setColor(Color.PINK);
+            g2.setComposite(AlphaComposite.SrcOver.derive(0.8f));//smaller opacity
+            g2.fillRect(activePiece.col*Board.SQUARE_SIZE,activePiece.row*Board.SQUARE_SIZE,Board.SQUARE_SIZE,Board.SQUARE_SIZE);
+            g2.setComposite(AlphaComposite.SrcOver.derive(1f));//resets opacity
+            activePiece.draw(g2);
         }
     }
 

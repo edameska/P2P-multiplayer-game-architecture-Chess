@@ -6,7 +6,7 @@ public class Board {
     final int COL = 8;
     final int ROW = 8;
     public static final int SQUARE_SIZE = 60;//square will be 100x100 pixels
-    public static final int HALF_SQUARE_SIZE = SQUARE_SIZE/2;
+
     public void draw(Graphics2D g2){
         int color=0;
         for (int i = 0; i < ROW; i++) {

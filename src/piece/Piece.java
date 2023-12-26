@@ -3,7 +3,6 @@ package piece;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.Buffer;
 
 import main.Board;
 
@@ -39,6 +38,21 @@ public class Piece {
     }
     public int getY(int row){
         return row*Board.SQUARE_SIZE;
+    }
+    //+size/2 to get the center of the square
+    public int getCol(int x){
+        return (x+(Board.SQUARE_SIZE/2))/Board.SQUARE_SIZE;
+    }
+    public int getRow(int y){
+        return (y+(Board.SQUARE_SIZE/2))/Board.SQUARE_SIZE;
+    }
+    public void updatePosition(){
+        x=getX(col);
+        y=getY(row);
+        //update previous position since move is complete
+        prevCol=getCol(x);
+        prevRow=getRow(y);
+
     }
     public void draw(Graphics2D g2){
         g2.drawImage(image,x,y,Board.SQUARE_SIZE,Board.SQUARE_SIZE,null);
