@@ -192,6 +192,7 @@ public class Piece {
                     }
                 }
             }
+
             //down right
             for (int i = prevCol+1; i <col; i++) {
                 int diff = Math.abs(i-prevCol);
