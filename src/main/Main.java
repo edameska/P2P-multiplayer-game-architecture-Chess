@@ -13,5 +13,7 @@ public class Main {
 
         window.setLocationRelativeTo(null);//shows up at center of monitor
         window.setVisible(true);
+        
+        gp.LaunchGame();//launches the game
     }
 }
