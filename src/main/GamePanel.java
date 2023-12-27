@@ -116,7 +116,7 @@ public class GamePanel extends JPanel implements Runnable{
             //promotion stops the game
             promote();
         }
-        else {
+        else if(!gameOver){
             if (mouse.pressed) {
                 if (activePiece == null) {
                     //if actieve piece is null check if a piiece can be picked up
@@ -140,16 +140,16 @@ public class GamePanel extends JPanel implements Runnable{
                         if (castlingPiece != null) {
                             castlingPiece.updatePosition();
                         }
-                        if(kingIsInCheck()){
-
+                        if(kingIsInCheck()&&isCheckMate()){
+                            gameOver=true;
                         }
-                        //else{
+                        else{
                             if (canPromote()) {
                                 promotion = true;
                             } else {
                                 changeTurn();//next move
                             }
-                        //}
+                        }
                     } else {
                         //move is not valid, reset it
                         CopyPieces(pieces, simPieces);
@@ -234,6 +234,150 @@ public class GamePanel extends JPanel implements Runnable{
                 }
         }
         return king;
+    }
+    private boolean isCheckMate(){
+        Piece king=getKing(true);//get opponents king
+        if(kingCanMove(king)){
+            return false;
+        }
+        else {
+
+            int colDif=Math.abs(king.col-checkingPiece.col);
+            int rowDif=Math.abs(king.row-checkingPiece.row);
+            //attacking diagonally
+            if(colDif==rowDif) {
+                if (checkingPiece.row < king.row) {
+                    if (king.col > checkingPiece.col) {
+                        for (int col = checkingPiece.col, row = checkingPiece.row; col < king.col; col++, row++) {
+                            for (Piece piece : simPieces) {
+                                if (piece.color != king.color && piece != king) {
+                                    if (piece.canMove(col, row)) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        for (int col = king.col + 1, row = king.row + 1; col <= checkingPiece.col; col++, row++) {
+                            for (Piece piece : simPieces) {
+                                if (piece.color != king.color && piece != king) {
+                                    if (piece.canMove(col, row)) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (checkingPiece.row > king.row) {
+                    if (king.col > checkingPiece.col) {
+                        for (int col = checkingPiece.col, row = checkingPiece.row; col < king.col; col++, row--) {
+                            for (Piece piece : simPieces) {
+                                if (piece.color != king.color && piece != king) {
+                                    if (piece.canMove(col, row)) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+
+                    } else {
+                        for (int col = checkingPiece.col, row = checkingPiece.row; col > king.col; col--, row++) {
+                            for (Piece piece : simPieces) {
+                                if (piece.color != king.color && piece != king) {
+                                    if (piece.canMove(col, row)) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            //attacking horizontally
+            if(rowDif==0){
+                if(king.col>checkingPiece.col){
+                    for(int i=checkingPiece.col;i<king.col;i++){
+                        for(Piece piece:simPieces){
+                            if(piece.color!=king.color&& piece!=king){
+                                if(piece.canMove(i,checkingPiece.row)){
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    for (int i = king.col + 1; i <= checkingPiece.col; i++) {
+                        for (Piece piece : simPieces) {
+                            if (piece.color != king.color && piece != king) {
+                                if (piece.canMove(i, checkingPiece.row)) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            //attacking vertically
+            if(colDif==0){
+                if(checkingPiece.row<king.row){
+                    for(int i=checkingPiece.row;i<king.row;i++){
+                        for(Piece piece:simPieces){
+                            if(piece.color!=king.color&& piece!=king){
+                                if(piece.canMove(checkingPiece.col,i)){
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+                else{
+                    for(int i=king.row+1;i<=checkingPiece.row;i++){
+                        for(Piece piece:simPieces){
+                            if(piece.color!=king.color&& piece!=king){
+                                if(piece.canMove(checkingPiece.col,i)){
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            //check if a piece can block the check
+        }
+        return true;
+    }
+    private boolean kingCanMove(Piece king){
+        //see if a king can move somewhere
+        if(validKingMove(king,-1,-1)) return true;
+        if(validKingMove(king,1,-1)) return true;
+        if(validKingMove(king,-1,1)) return true;
+        if(validKingMove(king,1,1)) return true;
+        if(validKingMove(king,-1,0)) return true;
+        if(validKingMove(king,0,-1)) return true;
+        if(validKingMove(king,1,0)) return true;
+        if(validKingMove(king,0,1)) return true;
+        return false;
+    }
+    private boolean validKingMove(Piece king, int col, int row){
+        boolean isValid=false;
+        //hypothetical move
+        king.col+=col;
+        king.row+=row;
+        //check if king can take a piece
+        if(king.collision!=null){
+            simPieces.remove(king.collision.getIndex());
+        }
+        if(!isIllegal(king)){
+            isValid=true;
+        }
+        //reset kings position and restore removed piece
+        king.resetPosition();
+        CopyPieces(pieces,simPieces);
+        return isValid;
     }
     private void checkCastle(){
         if(castlingPiece!=null){
@@ -365,6 +509,16 @@ public class GamePanel extends JPanel implements Runnable{
                 g2.setColor(new Color(203, 45, 92));
                 g2.drawString("You're in check!",500,250);
             }
+        }
+        if(gameOver){
+            if(currentColor==WHITE){
+                g2.drawString("White Wins!",500,250);
+
+            }
+            else{
+                g2.drawString("Black Wins!",500,250);
+            }
+
         }
 
     }

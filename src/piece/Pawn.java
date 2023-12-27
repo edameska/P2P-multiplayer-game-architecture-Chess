@@ -31,7 +31,7 @@ public class Pawn  extends Piece{
                 return true;
             }
             //diagonal capture
-            if (Math.abs(col - prevCol) == 1 && row == prevRow + MoveVal && collision != null && collision.color != color) {
+            if (((col-prevCol == 1)||(col-prevCol==-1)) && row == (prevRow + MoveVal) && collision != null && collision.color != color) {
                 return true;
             }
             //en passant/bieno pole
