@@ -208,7 +208,7 @@ public class GamePanel extends JPanel implements Runnable{
     }
 
     private boolean kingIsInCheck(){
-        Piece king= getKing(true);
+        Piece king= getKing(true);//get opponents king
         if(activePiece.canMove(king.col,king.row)){
             checkingPiece=activePiece;
             return true;
