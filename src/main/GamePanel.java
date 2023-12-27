@@ -24,10 +24,12 @@ public class GamePanel extends JPanel implements Runnable{
     public static final int BLACK=0;
     int currentColor=WHITE;
     //booleans
+    boolean staleMate;
     boolean canMove;
     boolean checkSquare;
     boolean promotion;
     boolean gameOver;
+
     public GamePanel() {
         //adding mouse listeners
         addMouseListener(mouse);
@@ -36,8 +38,8 @@ public class GamePanel extends JPanel implements Runnable{
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setBackground(new Color(22, 91, 83));
         //setting up pieces
-        //setPieces();
-        Testing();
+        setPieces();
+       // Testing();
         CopyPieces(pieces,simPieces);
     }
     public void LaunchGame() {
@@ -81,11 +83,10 @@ public class GamePanel extends JPanel implements Runnable{
         pieces.add(new piece.Rook(BLACK,7,0));
     }
     public void Testing(){
-        pieces.add(new Pawn(WHITE,7,6));
-        pieces.add(new King(WHITE,3,7));
-        pieces.add(new King(BLACK,0,3));
-        pieces.add(new Bishop(BLACK,1,4));
-        pieces.add(new Queen(BLACK,4,5));
+       pieces.add(new King(WHITE,7,7));
+       pieces.add(new King(BLACK,7,0));//?
+        pieces.add(new Queen(BLACK,6,0));
+        pieces.add(new Rook(BLACK,2,3));
     }
     private void CopyPieces(ArrayList<Piece> source, ArrayList<Piece> destination) {
         destination.clear();
@@ -142,6 +143,11 @@ public class GamePanel extends JPanel implements Runnable{
                         }
                         if(kingIsInCheck()&&isCheckMate()){
                             gameOver=true;
+                            System.out.println(gameOver);
+                        }
+                        else if(isStaleMate()&&!kingIsInCheck()){
+                            staleMate=true;
+                            gameOver=true;//if it doesnt work add stalemate before mousePresed
                         }
                         else{
                             if (canPromote()) {
@@ -187,6 +193,7 @@ public class GamePanel extends JPanel implements Runnable{
             }
         }
     }
+
     private boolean isIllegal(Piece king){
         if(king.type==PieceType.KING){
             for(Piece piece:simPieces){
@@ -238,16 +245,22 @@ public class GamePanel extends JPanel implements Runnable{
     private boolean isCheckMate(){
         Piece king=getKing(true);//get opponents king
         if(kingCanMove(king)){
+            System.out.println("King can move");
+
             return false;
+
         }
         else {
+            System.out.println("King cannot move");
+
 
             int colDif=Math.abs(king.col-checkingPiece.col);
             int rowDif=Math.abs(king.row-checkingPiece.row);
             //attacking diagonally
             if(colDif==rowDif) {
+                //above the king
                 if (checkingPiece.row < king.row) {
-                    if (king.col > checkingPiece.col) {
+                    if (checkingPiece.col < king.col) {
                         for (int col = checkingPiece.col, row = checkingPiece.row; col < king.col; col++, row++) {
                             for (Piece piece : simPieces) {
                                 if (piece.color != king.color && piece != king) {
@@ -257,8 +270,8 @@ public class GamePanel extends JPanel implements Runnable{
                                 }
                             }
                         }
-                    } else {
-                        for (int col = king.col + 1, row = king.row + 1; col <= checkingPiece.col; col++, row++) {
+                    } if (checkingPiece.col > king.col) {
+                        for (int col = checkingPiece.col, row = checkingPiece.row; col > king.col; col--, row++) {
                             for (Piece piece : simPieces) {
                                 if (piece.color != king.color && piece != king) {
                                     if (piece.canMove(col, row)) {
@@ -269,9 +282,9 @@ public class GamePanel extends JPanel implements Runnable{
                         }
                     }
                 }
-
+                //below the king
                 if (checkingPiece.row > king.row) {
-                    if (king.col > checkingPiece.col) {
+                    if (checkingPiece.col < king.col)  {
                         for (int col = checkingPiece.col, row = checkingPiece.row; col < king.col; col++, row--) {
                             for (Piece piece : simPieces) {
                                 if (piece.color != king.color && piece != king) {
@@ -282,8 +295,8 @@ public class GamePanel extends JPanel implements Runnable{
                             }
                         }
 
-                    } else {
-                        for (int col = checkingPiece.col, row = checkingPiece.row; col > king.col; col--, row++) {
+                    } if (checkingPiece.col > king.col)  {
+                        for (int col = checkingPiece.col, row = checkingPiece.row; col > king.col; col--, row--) {
                             for (Piece piece : simPieces) {
                                 if (piece.color != king.color && piece != king) {
                                     if (piece.canMove(col, row)) {
@@ -308,8 +321,8 @@ public class GamePanel extends JPanel implements Runnable{
                         }
                     }
                 }
-                else {
-                    for (int i = king.col + 1; i <= checkingPiece.col; i++) {
+               if(checkingPiece.col>king.col) {
+                    for (int i = checkingPiece.col ; i > king.col; i--) {
                         for (Piece piece : simPieces) {
                             if (piece.color != king.color && piece != king) {
                                 if (piece.canMove(i, checkingPiece.row)) {
@@ -333,8 +346,8 @@ public class GamePanel extends JPanel implements Runnable{
                         }
                     }
                 }
-                else{
-                    for(int i=king.row+1;i<=checkingPiece.row;i++){
+                if(checkingPiece.row>king.row){
+                    for(int i=checkingPiece.row;i>king.row;i--){
                         for(Piece piece:simPieces){
                             if(piece.color!=king.color&& piece!=king){
                                 if(piece.canMove(checkingPiece.col,i)){
@@ -348,18 +361,21 @@ public class GamePanel extends JPanel implements Runnable{
 
             //check if a piece can block the check
         }
+        System.out.println("Checkmate");
         return true;
     }
+
+
     private boolean kingCanMove(Piece king){
         //see if a king can move somewhere
         if(validKingMove(king,-1,-1)) return true;
-        if(validKingMove(king,1,-1)) return true;
-        if(validKingMove(king,-1,1)) return true;
-        if(validKingMove(king,1,1)) return true;
-        if(validKingMove(king,-1,0)) return true;
         if(validKingMove(king,0,-1)) return true;
+        if(validKingMove(king,1,-1)) return true;
+        if(validKingMove(king,-1,0)) return true;
         if(validKingMove(king,1,0)) return true;
+        if(validKingMove(king,-1,1)) return true;
         if(validKingMove(king,0,1)) return true;
+        if(validKingMove(king,1,1)) return true;
         return false;
     }
     private boolean validKingMove(Piece king, int col, int row){
@@ -368,16 +384,34 @@ public class GamePanel extends JPanel implements Runnable{
         king.col+=col;
         king.row+=row;
         //check if king can take a piece
-        if(king.collision!=null){
-            simPieces.remove(king.collision.getIndex());
-        }
-        if(!isIllegal(king)){
-            isValid=true;
+        if(king.canMove(king.col,king.row)) {
+            if (king.collision != null) {
+                simPieces.remove(king.collision.getIndex());
+            }
+            if (!isIllegal(king)) {
+                isValid = true;
+            }
         }
         //reset kings position and restore removed piece
         king.resetPosition();
         CopyPieces(pieces,simPieces);
         return isValid;
+    }
+    private boolean isStaleMate(){
+        int c=0;
+        //count pieces of opponent
+        for(Piece piece:simPieces){
+            if(piece.color!=currentColor){
+                c++;
+            }
+        }
+        //if only the opponent king is left
+        if(c==1) {
+            if (!kingCanMove(getKing(true))) {
+                return true;
+            }
+        }
+            return false;
     }
     private void checkCastle(){
         if(castlingPiece!=null){
@@ -495,7 +529,23 @@ public class GamePanel extends JPanel implements Runnable{
                 g2.drawImage(p.image,p.getX(p.col),p.getY(p.row)+20,Board.SQUARE_SIZE,Board.SQUARE_SIZE,null);
             }
         }
+        if(gameOver){
+            g2.setFont(new Font("Times New Roman",Font.BOLD,50));
+            g2.setColor(new Color(203, 45, 92));
+            if(staleMate){
+                g2.drawString("Stalemate!",100,250);
+            }
+            else
+            {
+                if (currentColor == WHITE) {
+                    g2.drawString("White Wins!", 100, 250);
 
+                } else {
+                    g2.drawString("Black Wins!", 100, 250);
+                }
+            }
+
+        }else{
         if(currentColor==WHITE){
             g2.drawString("White's Turn",500,400);
             if(checkingPiece!=null&&checkingPiece.color==BLACK){
@@ -510,17 +560,10 @@ public class GamePanel extends JPanel implements Runnable{
                 g2.drawString("You're in check!",500,250);
             }
         }
-        if(gameOver){
-            if(currentColor==WHITE){
-                g2.drawString("White Wins!",500,250);
-
-            }
-            else{
-                g2.drawString("Black Wins!",500,250);
-            }
-
         }
 
+
     }
+
 
 }
