@@ -1,12 +1,15 @@
 package main;
 
+import Network.NetworkManager;
 import piece.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class GamePanel extends JPanel implements Runnable{
+    NetworkManager networkManager;
     public static final int WIDTH = 680;
     public static final int HEIGHT = 480;
     final int FPS=60;
@@ -30,7 +33,9 @@ public class GamePanel extends JPanel implements Runnable{
     boolean promotion;
     boolean gameOver;
 
-    public GamePanel() {
+    public GamePanel(NetworkManager networkManager) {
+        this.networkManager = networkManager;
+        networkManager.registerGamePanel(this);
         //adding mouse listeners
         addMouseListener(mouse);
         addMouseMotionListener(mouse);
@@ -41,6 +46,20 @@ public class GamePanel extends JPanel implements Runnable{
         setPieces();
        // Testing();
         CopyPieces(pieces,simPieces);
+    }
+    public GamePanel(NetworkManager networkManager,String s) {
+        this.networkManager = networkManager;
+        networkManager.registerGamePanel(this);
+        //adding mouse listeners
+        addMouseListener(mouse);
+        addMouseMotionListener(mouse);
+        //setting up panel
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setBackground(new Color(22, 91, 83));
+        //setting up pieces
+        //setPieces();
+        // Testing();
+       // CopyPieces(pieces,simPieces);
     }
     public void LaunchGame() {
         gameThread = new Thread(this);
@@ -96,6 +115,7 @@ public class GamePanel extends JPanel implements Runnable{
     }
 
     public void run() {
+        networkManager.startListening();
         //game loop
         double drawInterval=1000000000.0/FPS;//1 second divided by FPS
         double delta=0;//time since last update
@@ -112,6 +132,51 @@ public class GamePanel extends JPanel implements Runnable{
             }
         }
     }
+    public void applyMove(Move move) {
+        // Get the piece at the source location
+        Piece piece = getPieceAt(move.getSource());
+
+        // If there's no piece at the source location or the piece is not of the current player's color, return
+        if (piece == null || piece.getColor() != currentColor) {
+            return;
+        }
+
+        // If the move is not valid, return
+        if (!piece.isValidSquare(move.getDestination().x, move.getDestination().y)){
+            return;
+        }
+
+        // Move the piece to the destination
+        piece.setLocation(move.getDestination());
+
+        // If there's a piece at the destination location, remove it
+        Piece capturedPiece = getPieceAt(move.getDestination());
+        if (capturedPiece != null) {
+            pieces.remove(capturedPiece);
+        }
+        Point destination = move.getDestination();
+        String move1 = destination.x + "-" + destination.y;
+        sendGameStateToPeers(move1);
+
+        // Change the turn
+        changeTurn();
+    }
+    public Piece getPieceAt(Point location) {
+        for (Piece piece : pieces) {
+            if (piece.getLocation().equals(location)) {
+                return piece;
+            }
+        }
+        return null;
+    }
+    public void sendMessage(String message) {
+        try {
+            networkManager.broadcast(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void update() {
         if(promotion){
             //promotion stops the game
@@ -165,7 +230,48 @@ public class GamePanel extends JPanel implements Runnable{
                 }
             }
         }
+//        String incoming=networkManager.getIncomingMessages();
+//        //check for incoming messages
+//        while (incoming!=null) {
+//            String gameStateMessage = incoming;
+//            handleIncomingGameState(gameStateMessage);
+//            // Parse and update the game state based on the received message
+//            // Example: gameStateMessage might be "MOVE 0-0" for castling
+//            // Update the game state accordingly...
+//        }
     }
+    public void receiveMessage(String message) {
+        // Handle the received message, update game state, etc.
+    }
+    private void handleIncomingGameState(String gameStateMessage) {
+        // Parse and update the game state based on the received message
+        // Example: gameStateMessage might be "MOVE 0-0" for castling
+        // Update the game state accordingly...
+        if (gameStateMessage.startsWith("MOVE")) {
+            // Parse the move information and update the game state
+            String[] parts = gameStateMessage.split(" ");
+            if (parts.length == 3) {
+                int from = Integer.parseInt(parts[1]);
+                int to = Integer.parseInt(parts[2]);
+                // Example: Update game state based on the move from 'from' to 'to'
+                // Replace this with your actual game state update logic
+            }
+        } else {
+            // Handle other types of game state messages as needed
+            System.out.println("error");
+        }
+    }
+
+    private void sendGameStateToPeers(String move) {
+        // Convert the current game state to a string representation
+        //String gameState = "MOVE 0-0";
+        try {
+            networkManager.broadcastGameState(move);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     //thinking phase
     private void simmulate(){
         canMove=false;
