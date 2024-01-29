@@ -5,21 +5,19 @@ import Network.NetworkManager;
 import javax.swing.JFrame;
 import java.io.IOException;
 import java.util.List;
-/*The project is almost finished. The message handling and sending messages methods already exist.
-* The only thing that's missing is getting the Network Manager to work between 2 projects, since each game creates its own network manager
-* I have some ideas on solving the issue, but I require a bit more time.*/
+/* The only thing I need to implement is changing the text in both games and changing the moves, which I can do with a bit more time*/
 public class Main {
     public static void main(String[] args) {
         NetworkManager networkManager = new NetworkManager();
 
         GamePanel gp1 = new GamePanel(networkManager);
-        JFrame window1 = createChessWindow(networkManager, "Chess - Window 1", gp1);
+        JFrame window1 = createChessWindow(networkManager, "Chess - Player 1", gp1);
         window1.pack();
         window1.setVisible(true);
         gp1.LaunchGame();
 
         GamePanel gp2 = new GamePanel(networkManager,"black");
-        JFrame window2 = createChessWindow(networkManager, "Chess - Window 2", gp2);
+        JFrame window2 = createChessWindow(networkManager, "Chess - Player 2", gp2);
         window2.pack();
         window2.setLocationRelativeTo(null);
         window2.setVisible(true);
@@ -28,7 +26,7 @@ public class Main {
         new Thread(() -> {
             while (true) {
                 try {
-                    //
+                    //Recieves messages and applies them to the game
                     List<Object> messages = networkManager.receiveMessages();
                     for (Object message : messages) {
                         Move move = (Move) message;
