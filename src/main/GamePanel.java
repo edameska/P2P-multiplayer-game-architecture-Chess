@@ -19,7 +19,9 @@ public class GamePanel extends JPanel implements Runnable{
     Mouse mouse=new Mouse();
     //pieces
     public static ArrayList<Piece> pieces=new ArrayList<Piece>();//backupList
-    public static ArrayList<Piece> simPieces=new ArrayList<Piece>();
+    public static ArrayList<Piece> blackPieces=new ArrayList<Piece>();
+    public static ArrayList<Piece> whitePieces=new ArrayList<Piece>();
+    public static ArrayList<Piece> simPieces=new ArrayList<Piece>();//simulated list
     public static ArrayList<Piece> promotionPieces=new ArrayList<Piece>();
     Piece activePiece;//piece that player is currently holding
     public static Piece castlingPiece;//piece that is castling
@@ -27,6 +29,7 @@ public class GamePanel extends JPanel implements Runnable{
     public static final int WHITE=1;
     public static final int BLACK=0;
     public static int currentColor=WHITE;
+    int player;
     //booleans
     boolean staleMate;
     boolean canMove;
@@ -37,6 +40,7 @@ public class GamePanel extends JPanel implements Runnable{
     public GamePanel(NetworkManager networkManager) {
         this.networkManager = networkManager;
         networkManager.registerGamePanel(this);
+        player=WHITE;
         //adding mouse listeners
         addMouseListener(mouse);
         addMouseMotionListener(mouse);
@@ -47,11 +51,13 @@ public class GamePanel extends JPanel implements Runnable{
         setPieces();
        // Testing();
         CopyPieces(pieces,simPieces);
+
+
     }
     public GamePanel(NetworkManager networkManager,String s) {
         this.networkManager = networkManager;
         networkManager.registerGamePanel(this);
-
+        player=BLACK;
         //adding mouse listeners
         addMouseListener(mouse);
         addMouseMotionListener(mouse);
@@ -61,7 +67,7 @@ public class GamePanel extends JPanel implements Runnable{
         //setting up pieces
         //setPieces();
         // Testing();
-       // CopyPieces(pieces,simPieces);
+
     }
     public void LaunchGame() {
         gameThread = new Thread(this);
@@ -69,39 +75,76 @@ public class GamePanel extends JPanel implements Runnable{
     }
     public void setPieces(){
         //white pieces
-        pieces.add(new piece.Pawn(WHITE,0,6));
-        pieces.add(new piece.Pawn(WHITE,1,6));
-        pieces.add(new piece.Pawn(WHITE,2,6));
-        pieces.add(new piece.Pawn(WHITE,3,6));
-        pieces.add(new piece.Pawn(WHITE,4,6));
-        pieces.add(new piece.Pawn(WHITE,5,6));
-        pieces.add(new piece.Pawn(WHITE,6,6));
-        pieces.add(new piece.Pawn(WHITE,7,6));
-        pieces.add(new piece.Rook(WHITE,0,7));
-        pieces.add(new piece.Knight(WHITE,1,7));
-        pieces.add(new piece.Bishop(WHITE,2,7));
-        pieces.add(new piece.Queen(WHITE,3,7));
-        pieces.add(new piece.King(WHITE,4,7));
-        pieces.add(new piece.Bishop(WHITE,5,7));
-        pieces.add(new piece.Knight(WHITE,6,7));
-        pieces.add(new piece.Rook(WHITE,7,7));
+        whitePieces.add(new Pawn(WHITE,0,6));
+        whitePieces.add(new Pawn(WHITE,1,6));
+        whitePieces.add(new Pawn(WHITE,2,6));
+        whitePieces.add(new Pawn(WHITE,3,6));
+        whitePieces.add(new Pawn(WHITE,4,6));
+        whitePieces.add(new Pawn(WHITE,5,6));
+        whitePieces.add(new Pawn(WHITE,6,6));
+        whitePieces.add(new Pawn(WHITE,7,6));
+        whitePieces.add(new Rook(WHITE,0,7));
+        whitePieces.add(new Knight(WHITE,1,7));
+        whitePieces.add(new Bishop(WHITE,2,7));
+        whitePieces.add(new Queen(WHITE,3,7));
+        whitePieces.add(new King(WHITE,4,7));
+        whitePieces.add(new Bishop(WHITE,5,7));
+        whitePieces.add(new Knight(WHITE,6,7));
+        whitePieces.add(new Rook(WHITE,7,7));
+
+        pieces.add(new Pawn(WHITE,0,6));
+        pieces.add(new Pawn(WHITE,1,6));
+        pieces.add(new Pawn(WHITE,2,6));
+        pieces.add(new Pawn(WHITE,3,6));
+        pieces.add(new Pawn(WHITE,4,6));
+        pieces.add(new Pawn(WHITE,5,6));
+        pieces.add(new Pawn(WHITE,6,6));
+        pieces.add(new Pawn(WHITE,7,6));
+        pieces.add(new Rook(WHITE,0,7));
+        pieces.add(new Knight(WHITE,1,7));
+        pieces.add(new Bishop(WHITE,2,7));
+        pieces.add(new Queen(WHITE,3,7));
+        pieces.add(new King(WHITE,4,7));
+        pieces.add(new Bishop(WHITE,5,7));
+        pieces.add(new Knight(WHITE,6,7));
+        pieces.add(new Rook(WHITE,7,7));
+
+
         //black pieces
-        pieces.add(new piece.Pawn(BLACK,0,1));
-        pieces.add(new piece.Pawn(BLACK,1,1));
-        pieces.add(new piece.Pawn(BLACK,2,1));
-        pieces.add(new piece.Pawn(BLACK,3,1));
-        pieces.add(new piece.Pawn(BLACK,4,1));
-        pieces.add(new piece.Pawn(BLACK,5,1));
-        pieces.add(new piece.Pawn(BLACK,6,1));
-        pieces.add(new piece.Pawn(BLACK,7,1));
-        pieces.add(new piece.Rook(BLACK,0,0));
-        pieces.add(new piece.Knight(BLACK,1,0));
-        pieces.add(new piece.Bishop(BLACK,2,0));
-        pieces.add(new piece.Queen(BLACK,3,0));
-        pieces.add(new piece.King(BLACK,4,0));
-        pieces.add(new piece.Bishop(BLACK,5,0));
-        pieces.add(new piece.Knight(BLACK,6,0));
-        pieces.add(new piece.Rook(BLACK,7,0));
+
+        blackPieces.add(new Pawn(BLACK,0,1));
+        blackPieces.add(new Pawn(BLACK,1,1));
+        blackPieces.add(new Pawn(BLACK,2,1));
+        blackPieces.add(new Pawn(BLACK,3,1));
+        blackPieces.add(new Pawn(BLACK,4,1));
+        blackPieces.add(new Pawn(BLACK,5,1));
+        blackPieces.add(new Pawn(BLACK,6,1));
+        blackPieces.add(new Pawn(BLACK,7,1));
+        blackPieces.add(new Rook(BLACK,0,0));
+        blackPieces.add(new Knight(BLACK,1,0));
+        blackPieces.add(new Bishop(BLACK,2,0));
+        blackPieces.add(new Queen(BLACK,3,0));
+        blackPieces.add(new King(BLACK,4,0));
+        blackPieces.add(new Bishop(BLACK,5,0));
+        blackPieces.add(new Knight(BLACK,6,0));
+        blackPieces.add(new Rook(BLACK,7,0));
+
+        pieces.add(new Pawn(BLACK,0,1));
+        pieces.add(new Pawn(BLACK,1,1));
+        pieces.add(new Pawn(BLACK,2,1));
+        pieces.add(new Pawn(BLACK,3,1));
+        pieces.add(new Pawn(BLACK,4,1));
+        pieces.add(new Pawn(BLACK,5,1));
+        pieces.add(new Pawn(BLACK,6,1));
+        pieces.add(new Pawn(BLACK,7,1));
+        pieces.add(new Rook(BLACK,0,0));
+        pieces.add(new Knight(BLACK,1,0));
+        pieces.add(new Bishop(BLACK,2,0));
+        pieces.add(new Queen(BLACK,3,0));
+        pieces.add(new King(BLACK,4,0));
+        pieces.add(new Bishop(BLACK,5,0));
+        pieces.add(new Knight(BLACK,6,0));
+        pieces.add(new Rook(BLACK,7,0));
     }
     public void Testing(){
        pieces.add(new King(WHITE,7,7));
@@ -172,13 +215,7 @@ public class GamePanel extends JPanel implements Runnable{
         }
         return null;
     }
- /*   public void sendMessage(String message) {
-        try {
-            networkManager.broadcast(message);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }*/
+
     private void handleIncomingGameState(String gameStateMessage) {
         System.out.println("Received move: " + gameStateMessage);
 
@@ -210,6 +247,9 @@ public class GamePanel extends JPanel implements Runnable{
 
 
     private void update() {
+        if(player!=currentColor){
+            return;
+        }
         if(promotion){
             //promotion stops the game
             promote();
