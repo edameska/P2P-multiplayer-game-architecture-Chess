@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 public class GamePanel extends JPanel implements Runnable{
     NetworkManager networkManager;
+
     public static final int WIDTH = 680;
     public static final int HEIGHT = 480;
     final int FPS=60;
@@ -25,7 +26,7 @@ public class GamePanel extends JPanel implements Runnable{
     Piece checkingPiece;//piece that is checking
     public static final int WHITE=1;
     public static final int BLACK=0;
-    int currentColor=WHITE;
+    public static int currentColor=WHITE;
     //booleans
     boolean staleMate;
     boolean canMove;
@@ -50,6 +51,7 @@ public class GamePanel extends JPanel implements Runnable{
     public GamePanel(NetworkManager networkManager,String s) {
         this.networkManager = networkManager;
         networkManager.registerGamePanel(this);
+
         //adding mouse listeners
         addMouseListener(mouse);
         addMouseMotionListener(mouse);
@@ -156,10 +158,11 @@ public class GamePanel extends JPanel implements Runnable{
         }
         Point destination = move.getDestination();
         String move1 = destination.x + "-" + destination.y;
-        sendGameStateToPeers(move1);
-
         // Change the turn
         changeTurn();
+        sendGameStateToPeers(move1);
+
+
     }
     public Piece getPieceAt(Point location) {
         for (Piece piece : pieces) {
@@ -169,13 +172,42 @@ public class GamePanel extends JPanel implements Runnable{
         }
         return null;
     }
-    public void sendMessage(String message) {
+ /*   public void sendMessage(String message) {
         try {
             networkManager.broadcast(message);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }*/
+    private void handleIncomingGameState(String gameStateMessage) {
+        System.out.println("Received move: " + gameStateMessage);
+
+        if (gameStateMessage.startsWith("MOVE")) {
+
+            // Example message: "MOVE 1-2 3-4" (from position 1,2 to position 3,4)
+            String[] parts = gameStateMessage.split(" ");
+            if (parts.length == 2) {
+                String[] from = parts[0].split("-");
+                String[] to = parts[1].split("-");
+
+                if (from.length == 2 && to.length == 2) {
+                    try {
+                        Point source = new Point(Integer.parseInt(from[0]), Integer.parseInt(from[1]));
+                        Point destination = new Point(Integer.parseInt(to[0]), Integer.parseInt(to[1]));
+
+                        Move move = new Move(source, destination);
+
+                        applyMove(move);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid move format.");
+                    }
+                }
+            }
+        } else {
+            System.out.println("Unknown message type: " + gameStateMessage);
+        }
     }
+
 
     private void update() {
         if(promotion){
@@ -230,43 +262,15 @@ public class GamePanel extends JPanel implements Runnable{
                 }
             }
         }
-//        String incoming=networkManager.getIncomingMessages();
-//        //check for incoming messages
-//        while (incoming!=null) {
-//            String gameStateMessage = incoming;
-//            handleIncomingGameState(gameStateMessage);
-//            // Parse and update the game state based on the received message
-//            // Example: gameStateMessage might be "MOVE 0-0" for castling
-//            // Update the game state accordingly...
-//        }
-    }
-    public void receiveMessage(String message) {
-        // Handle the received message, update game state, etc.
-    }
-    private void handleIncomingGameState(String gameStateMessage) {
-        // Parse and update the game state based on the received message
-        // Example: gameStateMessage might be "MOVE 0-0" for castling
-        // Update the game state accordingly...
-        if (gameStateMessage.startsWith("MOVE")) {
-            // Parse the move information and update the game state
-            String[] parts = gameStateMessage.split(" ");
-            if (parts.length == 3) {
-                int from = Integer.parseInt(parts[1]);
-                int to = Integer.parseInt(parts[2]);
-                // Example: Update game state based on the move from 'from' to 'to'
-                // Replace this with your actual game state update logic
-            }
-        } else {
-            // Handle other types of game state messages as needed
-            System.out.println("error");
-        }
+
+    }public void receiveMessage(String message) {
+        handleIncomingGameState(message);
     }
 
+
     private void sendGameStateToPeers(String move) {
-        // Convert the current game state to a string representation
-        //String gameState = "MOVE 0-0";
         try {
-            networkManager.broadcastGameState(move);
+            networkManager.broadcastMessage(move);
         } catch (IOException e) {
             e.printStackTrace();
         }

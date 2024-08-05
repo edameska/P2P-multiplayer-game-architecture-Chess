@@ -1,95 +1,105 @@
 package Network;
 
 import main.GamePanel;
-
 import java.io.*;
 import java.net.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NetworkManager {
-    private ServerSocket serverSocket;
-    private List<Socket> peerSockets;
-    private List<ObjectOutputStream> outputStreams;
-    private List<ObjectInputStream> inputStreams;
+    private List<Peer> peers;
+    private List<String> knownPeers;
     private GamePanel gamePanel;
+    private ServerSocket serverSocket;
+    private int port;
 
-    public NetworkManager() {
-        this.peerSockets = new ArrayList<>();
-        this.outputStreams = new ArrayList<>();
-        this.inputStreams = new ArrayList<>();
-    }
-
-    public void startServer(int port) throws IOException {
-        this.serverSocket = new ServerSocket(port);
-        new Thread(() -> {
-            while (true) {
-                try {
-                    Socket socket = serverSocket.accept();
-                    ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-                    ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-                    peerSockets.add(socket);
-                    outputStreams.add(outputStream);
-                    inputStreams.add(inputStream);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+    public NetworkManager(int port) {
+        this.peers = new ArrayList<>();
+        this.knownPeers = new ArrayList<>();
+        this.port = port;
     }
 
-    public void connectToPeer(String ip, int port) throws IOException {
-        Socket socket = new Socket(ip, port);
-        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-        peerSockets.add(socket);
-        outputStreams.add(outputStream);
-        inputStreams.add(inputStream);
-    }
-
-    public void broadcastMessage(Object message) throws IOException {
-        for (ObjectOutputStream outputStream : outputStreams) {
-            outputStream.writeObject(message);
-        }
-    }
-
-    public List<Object> receiveMessages() throws IOException, ClassNotFoundException {
-        List<Object> messages = new ArrayList<>();
-        for (ObjectInputStream inputStream : inputStreams) {
-            if (inputStream.available() > 0) {
-                messages.add(inputStream.readObject());
-            }
-        }
-        return messages;
-    }
-    public void registerGamePanel(GamePanel gamePanel) {
-        this.gamePanel = gamePanel;
-    }
-    public void broadcastGameState(String gameState) throws IOException {
-        for (ObjectOutputStream outputStream : outputStreams) {
-            outputStream.writeObject(gameState);
-        }
-    }
-
-    public void broadcast(String message) throws IOException {
-        for (ObjectOutputStream outputStream : outputStreams) {
-            outputStream.writeObject(message);
-        }
-    }
     public void startListening() {
-        for (ObjectInputStream inputStream : inputStreams) {
+        while (!isPortAvailable(port)) {
+            port++;
+        }
+
+        try {
+            serverSocket = new ServerSocket(port);
+            System.out.println("Server listening on port " + port);
             new Thread(() -> {
                 while (true) {
                     try {
-                        if (inputStream.available() > 0) {
-                            Object message = inputStream.readObject();
-                            // Process the received message
-                            gamePanel.receiveMessage(message.toString());
-                        }
-                    } catch (IOException | ClassNotFoundException e) {
+                        Socket socket = serverSocket.accept();
+                        System.out.println("Accepted connection from " + socket.getRemoteSocketAddress());
+                        Peer peer = new Peer(socket, this);
+                        peers.add(peer);
+                        new Thread(peer).start();
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
             }).start();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to bind to port: " + port, e);
+        }
+    }
+
+    private boolean isPortAvailable(int port) {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            serverSocket.setReuseAddress(true);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    public void connectToPeer(String ip, int port) {
+        try {
+            Socket socket = new Socket(ip, port);
+            Peer peer = new Peer(socket, this);
+            peers.add(peer);
+            new Thread(peer).start();
+            System.out.println("Connected to peer at " + ip + ":" + port);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to connect to peer at " + ip + ":" + port, e);
+        }
+    }
+
+    public void broadcastMessage(Object message) throws IOException {
+        for (Peer peer : peers) {
+            peer.sendMessage(message);
+        }
+    }
+
+    public void registerGamePanel(GamePanel gamePanel) {
+        this.gamePanel = gamePanel;
+    }
+
+    public void receiveMessage(Object message) {
+        if (gamePanel != null) {
+            gamePanel.receiveMessage(message.toString());
+        } else {
+            System.out.println("GamePanel not registered to receive messages.");
+        }
+    }
+
+    public void addKnownPeer(String peerAddress) {
+        if (!knownPeers.contains(peerAddress)) {
+            knownPeers.add(peerAddress);
+        }
+    }
+
+    public List<String> getKnownPeers() {
+        return new ArrayList<>(knownPeers);
+    }
+
+    public void stop() throws IOException {
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            serverSocket.close();
+        }
+        for (Peer peer : peers) {
+            peer.stop();
         }
     }
 }

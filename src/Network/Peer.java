@@ -1,49 +1,53 @@
 package Network;
+
 import java.io.*;
 import java.net.Socket;
-public class Peer implements Runnable{
-    Socket connection;
-    BufferedReader in;
-    BufferedWriter out;
-    NetworkManager networkManager;
+import java.util.List;
 
-    public Peer(Socket connection, NetworkManager networkManager) {
-        this.connection = connection;
-        this.networkManager=networkManager;
-        //we can talk with this
-        try{
-            in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            out = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
-        }catch(IOException e){
-            throw new RuntimeException(e);
-        }
+public class Peer implements Runnable {
+    private Socket socket;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
+    private NetworkManager networkManager;
+
+    public Peer(Socket socket, NetworkManager networkManager) throws IOException {
+        this.socket = socket;
+        this.networkManager = networkManager;
+        this.out = new ObjectOutputStream(socket.getOutputStream());
+        this.in = new ObjectInputStream(socket.getInputStream());
     }
 
     @Override
     public void run() {
-        String msg;
-        try{
-            while ((msg=in.readLine())!=null){
-                System.out.println("Message is "+ msg);
-                networkManager.broadcast(msg);
-
+        try {
+            while (true) {
+                Object message = in.readObject();
+                networkManager.receiveMessage(message);
+                // Share known peers when a new peer connects
+                if (message instanceof String && ((String) message).equals("REQUEST_PEERS")) {
+                    List<String> knownPeers = networkManager.getKnownPeers();
+                    sendMessage(knownPeers);
+                }
             }
-        }catch (Exception e){
-            System.out.println("Line broken?");
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            stop(); // Ensure resources are cleaned up
         }
-        System.out.println("Connection with peer: "+connection.getInetAddress().getHostAddress()+" established!");
     }
-    public void send(String message) {
-        try
-        {
-            out.write(message);
-            out.newLine();
-            out.flush();
-        }catch(IOException e){
-            throw new RuntimeException(e);
 
+    public void sendMessage(Object message) throws IOException {
+        out.writeObject(message);
+        out.flush();
+    }
+
+    public void stop() {
+        try {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-
     }
 }
