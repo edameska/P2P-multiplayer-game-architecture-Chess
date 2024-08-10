@@ -60,6 +60,9 @@ public class Piece {
         }
         return 0;
     }
+    public int getColor() {
+        return color;
+    }
     public void updatePosition(){
         //check bieno pole
         if(type== PieceType.PAWN){
@@ -175,6 +178,16 @@ public class Piece {
         }
 
         return false;
+    }
+
+    public void setLocation(Point location) {
+        this.x = location.x;
+        this.y = location.y;
+        this.col = getCol(x);
+        this.row = getRow(y);
+    }
+    public Point getLocation() {
+        return new Point(col, row);
     }
 
     public void draw(Graphics2D g2){
